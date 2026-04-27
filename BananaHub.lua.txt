@@ -119,7 +119,7 @@ local ClickState = 0
 local Num_self = 25
 
 -- Team mặc định
-getgenv().Team = getgenv().Team or "Marines"
+getgenv().Team = getgenv().Team or "Pirates"
 
 repeat 
     local start = plr.PlayerGui:WaitForChild("Main"):WaitForChild("Loading") 
@@ -3907,65 +3907,6 @@ SetAutoFarm:AddToggle("BringMob", {
         _B = Value
     end
 })
--- Gom quái theo vị trí farm hiện tại
--- Không kéo lên người chơi
--- Chỉ gom trong khu vực quái gần bạn
-
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-
-local Player = Players.LocalPlayer
-local Character = Player.Character or Player.CharacterAdded:Wait()
-
-local MonsterFolder = Workspace:WaitForChild("Enemies")
-
-_G.AutoGather = true
-
--- Khoảng cách quét quái quanh chỗ farm
-local ScanRange = 300
-
--- Khoảng cách gom quanh điểm farm
-local GatherRadius = 6
-
-task.spawn(function()
-    while _G.AutoGather do
-        pcall(function()
-
-            local Root = Character:FindFirstChild("HumanoidRootPart")
-            if not Root then return end
-
-            -- Lấy vị trí farm hiện tại
-            local FarmPosition = Root.Position
-
-            for _, mob in pairs(MonsterFolder:GetChildren()) do
-                local HRP = mob:FindFirstChild("HumanoidRootPart")
-                local Humanoid = mob:FindFirstChild("Humanoid")
-
-                if HRP and Humanoid and Humanoid.Health > 0 then
-                    local Distance = (HRP.Position - FarmPosition).Magnitude
-
-                    -- Chỉ gom quái trong khu vực farm
-                    if Distance <= ScanRange then
-                        HRP.CanCollide = false
-                        HRP.Size = Vector3.new(6,6,6)
-
-                        -- Gom quanh điểm farm, không dính vào người
-                        local OffsetX = math.random(-GatherRadius, GatherRadius)
-                        local OffsetZ = math.random(-GatherRadius, GatherRadius)
-
-                        HRP.CFrame = CFrame.new(
-                            FarmPosition.X + OffsetX,
-                            FarmPosition.Y,
-                            FarmPosition.Z + OffsetZ
-                        )
-                    end
-                end
-            end
-        end)
-
-        task.wait(0.15)
-    end
-end)
 
 SetAutoFarm:AddToggle("ObservationOpen", {
     Title = "Teleport Y if low hearth",
