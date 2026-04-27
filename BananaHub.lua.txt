@@ -3907,56 +3907,65 @@ SetAutoFarm:AddToggle("BringMob", {
         _B = Value
     end
 })
--- Gôm quái theo bãi + hạn chế lỗi rung/lệch + gom đúng 1 điểm
+-- Gom quái theo vị trí farm hiện tại
+-- Không kéo lên người chơi
+-- Chỉ gom trong khu vực quái gần bạn
+
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
 
-_G.AutoBringMob = true
-_G.BringDistance = 350
-_G.BringOffset = Vector3.new(0, 0, -6)
+local Player = Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
 
-local function GetCharacter()
-    return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-end
+local MonsterFolder = Workspace:WaitForChild("Enemies")
+
+_G.AutoGather = true
+
+-- Khoảng cách quét quái quanh chỗ farm
+local ScanRange = 300
+
+-- Khoảng cách gom quanh điểm farm
+local GatherRadius = 6
 
 task.spawn(function()
-    while _G.AutoBringMob do
-        task.wait(0.1)
+    while _G.AutoGather do
+        pcall(function()
 
-        local Character = GetCharacter()
-        local HRP = Character:FindFirstChild("HumanoidRootPart")
+            local Root = Character:FindFirstChild("HumanoidRootPart")
+            if not Root then return end
 
-        if HRP and workspace:FindFirstChild("Enemies") then
-            local bringPos = HRP.Position + _G.BringOffset
+            -- Lấy vị trí farm hiện tại
+            local FarmPosition = Root.Position
 
-            for _, mob in pairs(workspace.Enemies:GetChildren()) do
-                pcall(function()
-                    local mobHRP = mob:FindFirstChild("HumanoidRootPart")
-                    local humanoid = mob:FindFirstChild("Humanoid")
+            for _, mob in pairs(MonsterFolder:GetChildren()) do
+                local HRP = mob:FindFirstChild("HumanoidRootPart")
+                local Humanoid = mob:FindFirstChild("Humanoid")
 
-                    if mobHRP and humanoid and humanoid.Health > 0 then
-                        local distance = (mobHRP.Position - HRP.Position).Magnitude
+                if HRP and Humanoid and Humanoid.Health > 0 then
+                    local Distance = (HRP.Position - FarmPosition).Magnitude
 
-                        if distance <= _G.BringDistance then
-                            mobHRP.CanCollide = false
-                            mobHRP.Anchored = false
+                    -- Chỉ gom quái trong khu vực farm
+                    if Distance <= ScanRange then
+                        HRP.CanCollide = false
+                        HRP.Size = Vector3.new(6,6,6)
 
-                            humanoid.WalkSpeed = 0
-                            humanoid.JumpPower = 0
+                        -- Gom quanh điểm farm, không dính vào người
+                        local OffsetX = math.random(-GatherRadius, GatherRadius)
+                        local OffsetZ = math.random(-GatherRadius, GatherRadius)
 
-                            mobHRP.CFrame = CFrame.new(bringPos)
-                            mobHRP.AssemblyLinearVelocity = Vector3.zero
-                            mobHRP.AssemblyAngularVelocity = Vector3.zero
-                        end
+                        HRP.CFrame = CFrame.new(
+                            FarmPosition.X + OffsetX,
+                            FarmPosition.Y,
+                            FarmPosition.Z + OffsetZ
+                        )
                     end
-                end)
+                end
             end
-        end
+        end)
+
+        task.wait(0.15)
     end
 end)
-
--- Tắt
--- _G.AutoBringMob = false
 
 SetAutoFarm:AddToggle("ObservationOpen", {
     Title = "Teleport Y if low hearth",
