@@ -3211,77 +3211,6 @@ task.spawn(function()
     end
 end)
 
-ServerTime = Status:AddLabel("Time spawn: ")
-StatusSection:AddLabel("Timer: 0h 0m 0s")
-StatusSection:AddLabel("Server Timer: 0h 0m 0s")
-StatusSection:AddLabel("Next Time Spawn Fist of Darkness or God's Chalice: 0h 0m 0s")
-_G.ChaliceTime = 0
-_G.FistTime = 0
-
-spawn(function()
-    while task.wait(1) do
-        pcall(function()
-
-            if World3 then
-                _G.ChaliceTime += 1
-
-                local TimeLeft = 14400 - _G.ChaliceTime
-                if TimeLeft < 0 then
-                    TimeLeft = 0
-                end
-
-                local H = math.floor(TimeLeft / 3600)
-                local M = math.floor((TimeLeft % 3600) / 60)
-                local S = TimeLeft % 60
-
-                _G.ChaliceText = string.format(
-                    "God Chalice Spawn In : %02d:%02d:%02d",
-                    H,M,S
-                )
-
-                if _G.ChaliceTime >= 14400 then
-                    _G.ChaliceTime = 0
-
-                    game.StarterGui:SetCore("SendNotification",{
-                        Title = "Banana Hub",
-                        Text = "God's Chalice đã spawn!",
-                        Duration = 10
-                    })
-                end
-            end
-
-            if World2 then
-                _G.FistTime += 1
-
-                local TimeLeft = 14400 - _G.FistTime
-                if TimeLeft < 0 then
-                    TimeLeft = 0
-                end
-
-                local H = math.floor(TimeLeft / 3600)
-                local M = math.floor((TimeLeft % 3600) / 60)
-                local S = TimeLeft % 60
-
-                _G.FistText = string.format(
-                    "Fist Spawn In : %02d:%02d:%02d",
-                    H,M,S
-                )
-
-                if _G.FistTime >= 14400 then
-                    _G.FistTime = 0
-
-                    game.StarterGui:SetCore("SendNotification",{
-                        Title = "Banana Hub",
-                        Text = "Fist of Darkness đã spawn!",
-                        Duration = 10
-                    })
-                end
-            end
-
-        end)
-    end
-end)
-
 Miragecheck = Status:AddLabel("Mirage Island:  ")
 
 lastMirageStatus = ""
@@ -3664,55 +3593,6 @@ Server:AddButton({
     end
 })
 
-Server:AddButton({
-    Title = "Hop Rip_Indra",
-    Callback = function()
-       game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, "4946b5f2-4a2c-44e8-947e-f336caebde29", game.Players.LocalPlayer)
-  end
-  })
-  
-  Server:AddButton({
-    Title = "Hop Dough King",
-    Callback = function()
-       game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, "d2f3855d-9b92-4515-8740-c0eb7ffcd781", game.Players.LocalPlayer)
-  end
-  })
-  
-  Server:AddButton({
-    Title = "Hop Tyrant of the skies",
-    Callback = function()
-       game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, "f12d49ac-05c5-49b4-865f-afc7b227ef60", game.Players.LocalPlayer)
-  end
-  })
-  
-  Server:AddButton({
-    Title = "Hop Mirage island",
-    Callback = function()
-       game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, "f12d49ac-05c5-49b4-865f-afc7b227ef60", game.Players.LocalPlayer)
-  end
-  })
-  
-  Server:AddButton({
-    Title = "Hop Dark Beard",
-    Callback = function()
-       game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, "b19eab3f-5da2-41f9-8d57-8822163b7219", game.Players.LocalPlayer)
-  end
-  })
-  
-  Server:AddButton({
-    Title = "Hop Swords",
-    Callback = function()
-       game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, "0940dc34-b96d-411a-926b-79dd00b45eab", game.Players.LocalPlayer)
-  end
-  })
-  
-  Server:AddButton({
-    Title = "Hop Full moon",
-    Callback = function()
-       game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, "c7cf4abb-6682-4f33-86e2-03af70ab3153", game.Players.LocalPlayer)
-  end
-  })
-
 LocalPlayer = Window:AddTab("LocalPlayer")
 
 Player = LocalPlayer:AddLeftGroupbox("Local Player")
@@ -3746,6 +3626,13 @@ Player:AddButton({
     Title = "Load Config In Web",
     Callback = function()
         -- Code Load Config
+    end
+})
+
+Player:AddButton({
+    Title = "Show Item",
+    Callback = function()
+        -- Code Show Item
     end
 })
 
@@ -4059,115 +3946,9 @@ SetAutoFarm:AddToggle("BringMob", {
         _B = Value
     end
 })
--- ============================================================
--- BRING MOB — bring CẢ mob farm + mob phụ về _lockedBringPos mỗi 0.1s
--- Không bring nếu có player khác trong phạm vi 500 stud quanh player
--- ============================================================
-spawn(function()
-    while task.wait(0.1) do
-        pcall(function()
-            -- Đồng bộ getgenv với _G
-            getgenv().IsFarming     = _G.StartFarm
-            getgenv().MaxBringCount = _G.BringCount or 2
-            getgenv().BringMob      = _G.AutoBring
-
-            -- Guard
-            if not getgenv().BringMob  then return end
-            if not getgenv().IsFarming then return end
-
-            local targetMob = getgenv().CurrentTargetMob
-            if not targetMob or not targetMob.Parent then return end
-
-            -- Phải có vị trí đã chốt (tức là tracking đã teleport ít nhất 1 lần)
-            local bringCF = _lockedBringPos
-            if not bringCF then return end
-
-            local myChar = Player.Character
-            if not myChar then return end
-            local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-            if not myHRP then return end
-
-            -- ── CHECK PLAYER KHÁC trong 500 stud — nếu có thì KHÔNG bring ──
-            for _, otherPlayer in ipairs(Players:GetPlayers()) do
-                if otherPlayer == Player then continue end  -- bỏ qua bản thân
-                local otherChar = otherPlayer.Character
-                if not otherChar then continue end
-                local otherHRP = otherChar:FindFirstChild("HumanoidRootPart")
-                if not otherHRP then continue end
-                local distToOther = (otherHRP.Position - myHRP.Position).Magnitude
-                if distToOther <= 500 then
-                    return  -- có player khác gần → bỏ bring lần này
-                end
-            end
-
-            local mobName  = targetMob.Name
-            --   BringCount = 2 → bring thêm 1 (tổng 2 con dưới chân)
-            --   BringCount = 3 → bring thêm 2 (tổng 3 con)
-            local maxExtra = math.max(0, (getgenv().MaxBringCount or 2) - 1)
-
-            -- ── Tìm mob phụ cùng loại, KHÔNG giới hạn khoảng cách ──────
-            -- Collect tất cả mob cùng tên, sort theo khoảng cách gần nhất, lấy maxExtra con
-            local allSame = {}
-            for _, enemy in ipairs(workspace.Enemies:GetChildren()) do
-                if enemy == targetMob then continue end
-                local humanoid = enemy:FindFirstChild("Humanoid")
-                local rootPart = enemy:FindFirstChild("HumanoidRootPart")
-                if humanoid and rootPart and humanoid.Health > 0 and rootPart.Parent then
-                    if enemy.Name == mobName then
-                        local dist = (rootPart.Position - myHRP.Position).Magnitude
-                        -- Chỉ bring mob phụ trong phạm vi 300 stud tính từ player
-                        if dist <= 300 then
-                            table.insert(allSame, { rp = rootPart, dist = dist })
-                        end
-                    end
-                end
-            end
-            -- Sort gần → xa
-            table.sort(allSame, function(a, b) return a.dist < b.dist end)
-
-            local candidates = {}
-            for i = 1, math.min(maxExtra, #allSame) do
-                table.insert(candidates, allSame[i].rp)
-            end
-
-            -- ── Bring mob farm (luôn bring, kể cả khi không có mob phụ) ─
-            local farmHRP = targetMob:FindFirstChild("HumanoidRootPart")
-            local farmHum = targetMob:FindFirstChild("Humanoid")
-            if farmHRP and farmHum and farmHum.Health > 0 then
-                farmHRP.CFrame = bringCF
-                sethiddenproperty(Player, "SimulationRadius", math.huge)
-            end
-
-            -- ── Bring mob phụ (gần nhất, không giới hạn khoảng cách) ───
-            for _, rp in ipairs(candidates) do
-                rp.CFrame = bringCF
-                sethiddenproperty(Player, "SimulationRadius", math.huge)
-            end
-        end)
-    end
-end)
-
-SetAutoFarm:AddToggle("ObservationOpen", {
-    Title = "Teleport Y if low hearth",
-    Default = false,
-    Callback = function(Value)
-        _G.Safemode = Value
-    end
-})
-
-spawn(function()
-  while task.wait(Sec) do
-    pcall(function()
-	  if _G.Safemode then
-  	  local Calc_Health = plr.Character.Humanoid.Health / plr.Character.Humanoid.MaxHealth * 100
-  	  if Calc_Health < Num_self then shouldTween=true _tp(Root.CFrame * CFrame.new(0,500,0)) else shouldTween=false end
-      end
-    end)
-  end
-end)
 
 SetAutoFarm:AddToggle("BringMob", {
-    Title = "Bring Mob Banana",
+    Title = "Bring Mob New",
     Default = false,
     Callback = function(Value)
         _B = Value
@@ -4259,6 +4040,149 @@ spawn(function()
             end
         end)
     end
+end)
+
+SetAutoFarm:AddToggle("BringMob", {
+    Title = "Bring Mob Tween",
+    Default = false,
+    Callback = function(Value)
+        _B = Value
+    end
+})
+--// ================= BRING MOB LOGIC =================
+
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+-- BRING MOBS - Logic Bring Mob Mới
+-- Tính năng:
+--   - Bring mob cùng loại về vị trí mob farm (thay vì vị trí trung bình)
+--   - Phạm vi bring: 350 studs quanh mob farm
+--   - Check TargetPlayer: nếu có player khác 500 studs quanh localplayer → không bring
+--   - Teleport + Tween dựa theo FlySpeed ÷ 1.5
+--   - Anti-lag: SimulationRadius gọi 1 lần, chỉ destroy Animator khi cần
+-- MaxBring: giới hạn số mob được bring qua getgenv().MaxBringCount
+--------------------------------------------------------------------
+task.spawn(function()
+    while task.wait(0.5) do
+        pcall(function()
+            if not getgenv().BringMob then return end
+            if not getgenv().IsFarming then return end
+
+            -- Lấy mob đang farm làm mốc bring
+            local targetMob = getgenv().CurrentTargetMob
+            if not targetMob then return end
+            local targetHRP = targetMob:FindFirstChild("HumanoidRootPart")
+            local targetHum = targetMob:FindFirstChild("Humanoid")
+            if not targetHRP or not targetHum then return end
+            if targetHum.Health <= 0 then return end
+
+            --// CHECK TARGETPLAYER: 500 studs quanh localplayer
+            local myHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            if not myHRP then return end
+            local myPos = myHRP.Position
+            
+            -- Kiểm tra có TargetPlayer (player khác) trong 500 studs không
+            local hasTargetPlayer = false
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= player and p.Character then
+                    local pHRP = p.Character:FindFirstChild("HumanoidRootPart")
+                    if pHRP and (pHRP.Position - myPos).Magnitude <= 500 then
+                        hasTargetPlayer = true
+                        break
+                    end
+                end
+            end
+            
+            -- Nếu có TargetPlayer thì không bring
+            if hasTargetPlayer then return end
+
+            -- Vị trí cố định của mob farm - tất cả mob bring về đây
+            local farmPos    = targetHRP.Position
+            local targetName = targetMob.Name
+            local maxBring   = getgenv().MaxBringCount or 2
+
+            -- Tính toán khoảng cách teleport + tween dựa theo FlySpeed
+            -- Formula: khoảng cách = FlySpeed ÷ 1.5
+            local flySpeed = getgenv().FlySpeed or 180
+            local teleportDistance = flySpeed / 1.5
+
+            -- SimulationRadius gọi 1 lần, không lặp trong loop mob
+            pcall(function()
+                sethiddenproperty(player, "SimulationRadius", math.huge)
+            end)
+
+            -- Bring mob cùng loại trong phạm vi 350 quanh mob farm
+            local brought = 0
+            for _, v in ipairs(workspace.Enemies:GetChildren()) do
+                if brought >= maxBring then break end
+                if v ~= targetMob and v.Name == targetName then
+                    local hum = v:FindFirstChild("Humanoid")
+                    local hrp = v:FindFirstChild("HumanoidRootPart")
+                    if hum and hrp and hum.Health > 0 then
+                        local dist = (hrp.Position - farmPos).Magnitude
+                        
+                        -- Kiểm tra mob nằm trong phạm vi 350 studs quanh mob farm
+                        if dist > 8 and dist <= 350 then
+                            task.spawn(function()
+                                pcall(function()
+                                    -- Nếu khoảng cách > teleportDistance: teleport trước
+                                    if dist > teleportDistance then
+                                        hrp.CFrame = CFrame.new(farmPos + Vector3.new(0, 3, 0))
+                                        task.wait(0.1)
+                                    end
+                                    
+                                    -- Tween từ vị trí hiện tại (hoặc sau teleport) về farmPos
+                                    local tweenInfo = TweenInfo.new(
+                                        0.2,
+                                        Enum.EasingStyle.Linear,
+                                        Enum.EasingDirection.Out
+                                    )
+                                    local tween = TweenService:Create(
+                                        hrp,
+                                        tweenInfo,
+                                        { CFrame = CFrame.new(farmPos + Vector3.new(0, 0, 0)) }
+                                    )
+                                    
+                                    -- Vô hiệu hóa tính năng của mob
+                                    hrp.CanCollide = false
+                                    hrp.Velocity = Vector3.zero
+                                    hum.WalkSpeed = 0
+                                    hum.JumpPower = 0
+                                    
+                                    -- Destroy Animator nếu tồn tại
+                                    local anim = hum:FindFirstChild("Animator")
+                                    if anim then anim:Destroy() end
+                                    
+                                    tween:Play()
+                                    task.wait(0.25)
+                                end)
+                            end)
+                            brought = brought + 1
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+SetAutoFarm:AddToggle("ObservationOpen", {
+    Title = "Teleport Y if low hearth",
+    Default = false,
+    Callback = function(Value)
+        _G.Safemode = Value
+    end
+})
+
+spawn(function()
+  while task.wait(Sec) do
+    pcall(function()
+	  if _G.Safemode then
+  	  local Calc_Health = plr.Character.Humanoid.Health / plr.Character.Humanoid.MaxHealth * 100
+  	  if Calc_Health < Num_self then shouldTween=true _tp(Root.CFrame * CFrame.new(0,500,0)) else shouldTween=false end
+      end
+    end)
+  end
 end)
 
 SetAutoFarm:AddToggle("ObservationOpen", {
@@ -4478,10 +4402,10 @@ SelectMethodFarm:AddSlider({
     end
 })
 
-SelectMethodFarm:AddToggle("IgnoreAttackKatakuri", { 
-    Title = "Ignore Attack Katakuri", 
-    Default = false, 
-    Callback = function(Value) 
+SelectMethodFarm:AddToggle("IgnoreAttackKatakuri", {
+    Title = "Ignore Attack Katakuri",
+    Default = false,
+    Callback = function(Value)
         getgenv().IgnoreAttackKatakuri = Value
     end
 })
@@ -4499,7 +4423,7 @@ for _,v in pairs(workspace.Enemies:GetChildren()) do
         end
 
     end
-end)
+end
 
 SelectMethodFarm:AddToggle("HopKataV1", {
     Title = "Hop Find Katakuri",
@@ -6952,6 +6876,30 @@ spawn(function()
     end
 end)
     
+RaidStatusLabel = RaidOpen:AddLabel("Raid: Idle")
+
+spawn(function()
+    while task.wait(1) do
+        pcall(function()
+            if not RaidStatusLabel then return end
+            local raidTimer = plr.PlayerGui.Main.TopHUDList.RaidTimer
+            if _G.Raiding and raidTimer and raidTimer.Visible then
+                local enemyCount = 0
+                for _,v in pairs(workspace.Enemies:GetChildren()) do
+                    if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                        enemyCount = enemyCount + 1
+                    end
+                end
+                RaidStatusLabel:SetText("🔴 RAID ACTIVE | Enemies: " .. enemyCount)
+            elseif _G.Raiding then
+                RaidStatusLabel:SetText("🟡 Waiting for Raid...")
+            else
+                RaidStatusLabel:SetText("Raid: Idle")
+            end
+        end)
+    end
+end)  
+    
 RaidOpen:AddToggle("RaidFarming", {
     Title = "Auto Raid",
     Default = false,
@@ -6975,6 +6923,34 @@ spawn(function()
                     repeat wait() Attack.Kill(v,_G.Raiding) NextIs=false until not _G.Raiding or not v.Parent or v.Humanoid.Health <= 0 NextIs=true
                   end
                 end
+              end
+            end
+          end
+        else
+          NextIs = false
+        end
+      else
+        NextIs = false
+      end
+    end
+  end)
+end)
+
+spawn(function()
+  pcall(function() 
+    while wait(Sec) do
+      if _G.Raiding then  
+        if plr.PlayerGui.Main.TopHUDList.RaidTimer.Visible == true then          
+          -- Raid: kill all enemies có trong workspace.Enemies
+          for i,v in pairs(workspace.Enemies:GetChildren()) do
+            if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") then
+              if v.Humanoid.Health > 0 then
+                NextIs = false
+                repeat 
+                  wait() 
+                  Attack.Kill(v, _G.Raiding) 
+                until not _G.Raiding or not v.Parent or v.Humanoid.Health <= 0
+                NextIs = true
               end
             end
           end
@@ -7545,9 +7521,8 @@ SettingsSea = Sea:AddLeftGroupbox("Setting")
 
 SettingsSea:AddDropdown("SelectZone", {
     Title = "Select Zone",
-    Values = {"Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6",},
-    Default = nil,
-    Multi = true,
+    Values = {"Lv 1", "Lv 2", "Lv 3", "Lv 4", "Lv 5", "Lv 6", "Lv Infinite"},
+    Default = "Lv 1",
     Callback = function(Value)
         _G.DangerSc = Value
     end
@@ -7555,21 +7530,29 @@ SettingsSea:AddDropdown("SelectZone", {
 
 SettingsSea:AddDropdown("SelectSeaEvent", {
     Title = "Select Sea Events",
-    Values = {"Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6",},
+    Values = {"Shark", "Piranha", "Terror Shark", "Fish Crew Member", "Haunted Crew Member", "Sea Beast", "Leviathan", "Pirate Grand Brigade", "Fish Boat"},
     Default = nil,
-    Multi = true,
     Callback = function(Value)
         _G.SelectSeaEvent = Value
+        -- Auto set event flags khi chọn
+        _G.Shark = (Value == "Shark")
+        _G.Piranha = (Value == "Piranha")
+        _G.TerrorShark = (Value == "Terror Shark")
+        _G.MobCrew = (Value == "Fish Crew Member")
+        _G.HCM = (Value == "Haunted Crew Member")
+        _G.SeaBeast1 = (Value == "Sea Beast")
+        _G.Leviathan1 = (Value == "Leviathan")
+        _G.PGB = (Value == "Pirate Grand Brigade")
+        _G.FishBoat = (Value == "Fish Boat")
     end
 })
 
 SettingsSea:AddDropdown("SelectBoat", {
     Title = "Select Boat",
     Values = {"Guardian", "PirateGrandBrigade", "MarineGrandBrigade", "PirateBrigade", "MarineBrigade", "PirateSloop", "MarineSloop", "Beast Hunter"},
-    Default = nil,
-    Multi = true,
+    Default = "Guardian",
     Callback = function(Value)
-        _G.SelectSeaEvent = Value
+        _G.SelectedBoat = Value
     end
 })
 
@@ -7744,38 +7727,40 @@ spawn(function()
                 
             -- Sea Beast
             elseif selected == "Sea Beast" then
+                if not workspace.SeaBeasts:FindFirstChild("SeaBeast1") then
+                    task.wait(1)
+                end
                 if workspace.SeaBeasts:FindFirstChild("SeaBeast1") then
                     for a, b in pairs(workspace.SeaBeasts:GetChildren()) do
-                        if b:FindFirstChild("HumanoidRootPart") and b:FindFirstChild("Health") and b.Health.Value > 0 then
+                        if b.Name == "SeaBeast1" and b:FindFirstChild("HumanoidRootPart") and b:FindFirstChild("Health") and b.Health.Value > 0 then
+                            local waterY = workspace.Map["WaterBase-Plane"].Position.Y
                             repeat
-                                task.wait()
-                                spawn(function()
-                                    _tp(CFrame.new(b.HumanoidRootPart.Position.X, game:GetService("Workspace").Map["WaterBase-Plane"].Position.Y + 200, b.HumanoidRootPart.Position.Z))
-                                end)
-                                if plr:DistanceFromCharacter(b.HumanoidRootPart.CFrame.Position) <= 500 then
-                                    AitSeaSkill_Custom = b.HumanoidRootPart.CFrame
-                                    MousePos = AitSeaSkill_Custom.Position
-                                    if CheckF() then
-                                        weaponSc("Blox Fruit")
-                                        Useskills("Blox Fruit", "Z")
-                                        Useskills("Blox Fruit", "X")
-                                        Useskills("Blox Fruit", "C")
-                                    else
-                                        Useskills("Melee", "Z")
-                                        Useskills("Melee", "X")
-                                        Useskills("Melee", "C")
-                                        wait(.1)
-                                        Useskills("Sword", "Z")
-                                        Useskills("Sword", "X")
-                                        wait(.1)
-                                        Useskills("Blox Fruit", "Z")
-                                        Useskills("Blox Fruit", "X")
-                                        Useskills("Blox Fruit", "C")
-                                        wait(.1)
-                                        Useskills("Gun", "Z")
-                                        Useskills("Gun", "X")
+                                task.wait(0.1)
+                                pcall(function()
+                                    if not b or not b.Parent or not b:FindFirstChild("HumanoidRootPart") then return end
+                                    local targetY = waterY + 250
+                                    local bPos = b.HumanoidRootPart.Position
+                                    -- Luôn đứng trên sea beast
+                                    _tp(CFrame.new(bPos.X, targetY, bPos.Z))
+                                    if plr:DistanceFromCharacter(bPos) <= 600 then
+                                        AitSeaSkill_Custom = b.HumanoidRootPart.CFrame
+                                        MousePos = bPos
+                                        if CheckF() then
+                                            weaponSc("Blox Fruit")
+                                            Useskills("Blox Fruit", "Z")
+                                            wait(0.05) Useskills("Blox Fruit", "X")
+                                            wait(0.05) Useskills("Blox Fruit", "C")
+                                        else
+                                            Useskills("Melee", "Z")
+                                            Useskills("Melee", "X")
+                                            Useskills("Sword", "Z")
+                                            Useskills("Sword", "X")
+                                            Useskills("Blox Fruit", "Z")
+                                            Useskills("Blox Fruit", "X")
+                                            Useskills("Gun", "Z")
+                                        end
                                     end
-                                end
+                                end)
                             until _G.SelectSeaEvent ~= "Sea Beast" or not b:FindFirstChild("HumanoidRootPart") or not b.Parent or b.Health.Value <= 0
                         end
                     end
@@ -7853,13 +7838,43 @@ spawn(function()
     end
     end)
 
+SeaEventLabel = SettingsSea:AddLabel("Sea Status: Idle")
+
 SettingsSea:AddToggle("SeaFarm", {
     Title = "Auto Sea Event",
     Default = false,
     Callback = function(Value)
         _G.SailBoats = Value
+        if Value then
+            SeaEventLabel:SetText("Sea Status: 🟢 Active [" .. (tostring(_G.SelectSeaEvent) or "None") .. "]")
+        else
+            SeaEventLabel:SetText("Sea Status: ❌ Stopped")
+        end
     end
 })
+
+-- Status cập nhật liên tục
+spawn(function()
+    while task.wait(2) do
+        pcall(function()
+            if _G.SailBoats and SeaEventLabel then
+                local evt = tostring(_G.SelectSeaEvent or "None")
+                local zone = tostring(_G.DangerSc or "None")
+                if CheckLeviathan() then
+                    SeaEventLabel:SetText("Sea Status: 🔵 LEVIATHAN FOUND!")
+                elseif CheckSeaBeast() then
+                    SeaEventLabel:SetText("Sea Status: 🔴 Sea Beast Active!")
+                elseif CheckEnemiesBoat() then
+                    SeaEventLabel:SetText("Sea Status: 🟠 Fish Boat Active!")
+                elseif CheckPirateGrandBrigade() then
+                    SeaEventLabel:SetText("Sea Status: 🟡 PGB Active!")
+                else
+                    SeaEventLabel:SetText("Sea Status: 🟢 Sailing [" .. zone .. "]")
+                end
+            end
+        end)
+    end
+end)
 
 spawn(function()
   while wait() do
@@ -7977,6 +7992,42 @@ LeviathanSection:AddToggle("LeviathanToggle", {
     end
 })
 
+-- ========== BLACKBEARD KEY SPAWN STATUS ==========
+spawn(function()
+    -- Tìm label nếu KitsuneSection hoặc LeviathanSection đã có
+    -- Thêm status theo dõi spawn key râu đen trực tiếp vào Sea tab
+    local BBKeyLabel = nil
+    -- Tạo label mới sau khi Sea tab load
+    task.wait(2)
+    pcall(function()
+        if LeviathanSection then
+            BBKeyLabel = LeviathanSection:AddLabel("🗝️ Blackbeard Key: Checking...")
+        end
+    end)
+    while task.wait(3) do
+        pcall(function()
+            if not BBKeyLabel then return end
+            -- Kiểm tra Blackbeard trong Enemies/Replicated
+            local hasBlackbeard = workspace.Enemies:FindFirstChild("Darkbeard")
+                or replicated:FindFirstChild("Darkbeard")
+            -- Kiểm tra key có trong inventory
+            local hasFist = GetBP and (GetBP("Fist of Darkness") ~= nil)
+            -- Kiểm tra progress CDK
+            local cdkProgress = nil
+            pcall(function()
+                cdkProgress = replicated.Remotes.CommF_:InvokeServer("BlackbeardReward", "Check")
+            end)
+            if hasFist then
+                BBKeyLabel:SetText("🗝️ BB Key: ✅ Fist of Darkness IN BAG")
+            elseif hasBlackbeard then
+                BBKeyLabel:SetText("🗝️ BB Key: 🔴 Darkbeard SPAWNED - Go!")
+            else
+                BBKeyLabel:SetText("🗝️ BB Key: Darkbeard not spawned")
+            end
+        end)
+    end
+end)
+
 -- Spawn functions for Kitsune Event
 spawn(function()
     while wait(Sec) do
@@ -8067,18 +8118,38 @@ spawn(function()
             pcall(function()
                 for _, v in pairs(workspace.SeaBeasts:GetChildren()) do
                     if v.Name == "Leviathan" and v:FindFirstChild("HumanoidRootPart") then
+                        _G.SeaBeast1 = true
                         repeat
-                            wait(0.2)
-                            if (Root.Position - v.HumanoidRootPart.Position).Magnitude > 10 then
-                                _tp(v.HumanoidRootPart.CFrame * CFrame.new(0, 500, 0))
-                            end
-                            if not _G.SeaBeast1 then
-                                _G.SeaBeast1 = true
-                            end
-                            if not plr.Character:FindFirstChild("HasBuso") then
-                                replicated.Remotes.CommF_:InvokeServer("Buso")
-                            end
-                            MousePos = v.HumanoidRootPart.Position
+                            wait(0.1)
+                            pcall(function()
+                                if not v or not v.Parent or not v:FindFirstChild("HumanoidRootPart") then return end
+                                local dist = (Root.Position - v.HumanoidRootPart.Position).Magnitude
+                                -- Giữ khoảng cách 300-500 trên không để farm an toàn
+                                local waterY = workspace.Map["WaterBase-Plane"].Position.Y
+                                local targetY = waterY + 300
+                                if dist > 600 then
+                                    _tp(CFrame.new(v.HumanoidRootPart.Position.X, targetY, v.HumanoidRootPart.Position.Z))
+                                end
+                                if not plr.Character:FindFirstChild("HasBuso") then
+                                    replicated.Remotes.CommF_:InvokeServer("Buso")
+                                end
+                                MousePos = v.HumanoidRootPart.Position
+                                -- Use all skills trực tiếp
+                                if CheckF() then
+                                    weaponSc("Blox Fruit")
+                                    Useskills("Blox Fruit", "Z")
+                                    Useskills("Blox Fruit", "X")
+                                    Useskills("Blox Fruit", "C")
+                                else
+                                    Useskills("Melee", "Z")
+                                    Useskills("Melee", "X")
+                                    Useskills("Sword", "Z")
+                                    Useskills("Sword", "X")
+                                    Useskills("Blox Fruit", "Z")
+                                    Useskills("Blox Fruit", "X")
+                                    Useskills("Gun", "Z")
+                                end
+                            end)
                         until not v:FindFirstChild("HumanoidRootPart") or not _G.Leviathan1
                         _G.SeaBeast1 = false
                     end
@@ -8470,7 +8541,7 @@ spawn(function()
 end)
 
 TrialRace:AddToggle("MigareToggle", {
-    Title = "Teleport To Migare Island",
+    Title = "Teleport To Mirage Island",
     Default = false,
     Callback = function(Value)
         _G.MigareIsland = Value -- Sửa tên biến
@@ -9652,6 +9723,24 @@ spawn(function()
   end
 end)
 
+IslandFindLabel = VolcanoFarm:AddLabel("Island Hunt: Idle")
+
+spawn(function()
+    while task.wait(2) do
+        pcall(function()
+            if not IslandFindLabel then return end
+            local found = workspace["_WorldOrigin"].Locations:FindFirstChild("Prehistoric Island")
+            if found then
+                IslandFindLabel:SetText("🏝️ Island: ✅ FOUND! Go now!")
+            elseif _G.Prehis_Find then
+                IslandFindLabel:SetText("🔍 Hunting island... Sailing")
+            else
+                IslandFindLabel:SetText("Island Hunt: Off")
+            end
+        end)
+    end
+end)
+
 VolcanoFarm:AddToggle("PrehistoricIslandFind", {
     Title = "Auto Find Prehistoric Island",
     Default = false,
@@ -9708,6 +9797,29 @@ spawn(function()
       end)
     end
   end
+end)
+
+VolcanoStatusLabel = VolcanoFarm:AddLabel("Volcano: Idle")
+
+spawn(function()
+    while task.wait(1) do
+        pcall(function()
+            if VolcanoStatusLabel then
+                local pi = workspace.Map:FindFirstChild("PrehistoricIsland")
+                if not pi then
+                    VolcanoStatusLabel:SetText("Volcano: Island Not Spawned")
+                elseif workspace.Enemies:FindFirstChild("Lava Golem") then
+                    VolcanoStatusLabel:SetText("🔴 Lava Golem Active!")
+                elseif _G.Prehis_Skills then
+                    VolcanoStatusLabel:SetText("🟠 Fixing Volcano Rocks...")
+                elseif _G.Prehis_Find then
+                    VolcanoStatusLabel:SetText("🟡 Searching Island...")
+                else
+                    VolcanoStatusLabel:SetText("Volcano: Standby")
+                end
+            end
+        end)
+    end
 end)
 
 VolcanoFarm:AddToggle("EventVolcanoStart", {
